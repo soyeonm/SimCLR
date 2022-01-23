@@ -9,6 +9,8 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils import save_config_file, accuracy, save_checkpoint
 
+import pickle
+
 torch.manual_seed(0)
 
 
@@ -70,12 +72,16 @@ class SimCLR(object):
                 images = torch.cat(images, dim=0)
 
                 images = images.to(self.args.device)
+                pickle.dump(images.detach().cpu(), open('image.p', 'wb'))
 
                 with autocast(enabled=self.args.fp16_precision):
                     features = self.model(images)
+                    pickle.dump(features.detach().cpu(), open('features.p', 'wb'))
                     logits, labels = self.info_nce_loss(features)
+                    pickle.dump(logits.detach().cpu(), open('logits.p', 'wb'))
+                    pickle.dump(labels.detach().cpu(), open('labels.p', 'wb'))
                     loss = self.criterion(logits, labels)
-
+                    pickle.dump(loss.detach().cpu(), open('loss.p', 'wb'))
                 self.optimizer.zero_grad()
 
                 scaler.scale(loss).backward()
